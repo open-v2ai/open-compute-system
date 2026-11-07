@@ -1,0 +1,79 @@
+stages:
+  - verify
+  - build
+
+api_verify:
+  stage: verify
+  image: ghcr.io/astral-sh/uv:python3.13-bookworm-slim
+  services:
+    - name: postgres:16-alpine
+      alias: postgres
+    - name: redis:7-alpine
+      alias: redis
+  variables:
+    POSTGRES_DB: open_compute_system_test
+    POSTGRES_USER: open_compute_system
+    POSTGRES_PASSWORD: open_compute_system_test_password
+    TEST_DATABASE_URL: postgresql+asyncpg://open_compute_system:open_compute_system_test_password@postgres:5432/open_compute_system_test
+    DATABASE_URL: postgresql+asyncpg://open_compute_system:open_compute_system_test_password@postgres:5432/open_compute_system_test
+    REDIS_URL: redis://redis:6379/0
+    APP_ENV: test
+    DEMO_SEED_ENABLED: "true"
+  before_script:
+    - cd api
+    - uv sync --frozen
+  script:
+    - uv run python scripts/upgrade_database.py
+    - uv run ruff check .
+    - uv run pytest -q
+
+agent_verify:
+  stage: verify
+  image: ghcr.io/astral-sh/uv:python3.13-bookworm-slim
+  before_script:
+    - cd agent
+    - uv sync --frozen
+  script:
+    - uv run ruff check app tests
+    - uv run pytest -q
+
+contract_verify:
+  stage: verify
+  image: ghcr.io/astral-sh/uv:python3.13-bookworm-slim
+  before_script:
+    - cd api
+    - uv sync --frozen
+  script:
+    - uv run python scripts/generate_openapi.py
+    - cd ..
+    - git diff --exit-code -- web/lib/api/generated
+
+repository_verify:
+  stage: verify
+  image: python:3.13-slim
+  script:
+    - python scripts/check_open_source.py
+
+web_verify:
+  stage: verify
+  image: node:22-alpine
+  before_script:
+    - cd web
+    - corepack enable
+    - corepack prepare pnpm@11.20.0 --activate
+    - pnpm install --frozen-lockfile
+  script:
+    - pnpm typecheck
+    - pnpm lint
+    - pnpm test
+
+web_build:
+  stage: build
+  image: node:22-alpine
+  before_script:
+    - cd web
+    - corepack enable
+    - corepack prepare pnpm@11.20.0 --activate
+    - pnpm install --frozen-lockfile
+  script:
+    - pnpm build

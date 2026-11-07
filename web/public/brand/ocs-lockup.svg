@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 860 240" role="img" aria-labelledby="title desc">
+  <title id="title">Open Compute System</title>
+  <desc id="desc">等尺寸 OCS 图形、分隔线和双行 Open Compute System 字标。</desc>
+  <defs>
+    <mask id="s-outline" maskUnits="userSpaceOnUse" x="0" y="0" width="430" height="240">
+      <rect width="430" height="240" fill="#000"/>
+      <path d="M378.119 68.801C349.192 47.763 286.517 50.101 269.642 80.488C251.563 112.434 298.57 119.447 338.344 124.901C386.556 131.134 401.02 149.835 381.735 169.314C356.424 194.247 287.722 187.235 260 163.86" fill="none" stroke="#fff" stroke-width="62" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M378.119 68.801C349.192 47.763 286.517 50.101 269.642 80.488C251.563 112.434 298.57 119.447 338.344 124.901C386.556 131.134 401.02 149.835 381.735 169.314C356.424 194.247 287.722 187.235 260 163.86" fill="none" stroke="#000" stroke-width="42" stroke-linecap="round" stroke-linejoin="round"/>
+    </mask>
+  </defs>
+  <g transform="translate(8 12) scale(.9)">
+    <g fill="none" stroke="#111714" stroke-width="10">
+      <circle cx="112" cy="120" r="91"/>
+      <circle cx="112" cy="120" r="54"/>
+    </g>
+    <path d="M247 70A64 64 0 1 0 247 170" fill="none" stroke="#8FD400" stroke-width="64" stroke-linecap="butt"/>
+    <rect width="430" height="240" fill="#111714" mask="url(#s-outline)"/>
+  </g>
+  <line x1="414" y1="42" x2="414" y2="198" stroke="#111714" stroke-width="4"/>
+  <g fill="#111714" font-family="Arial, Helvetica, sans-serif">
+    <text x="454" y="111" font-size="72" font-weight="600" textLength="186" lengthAdjust="spacingAndGlyphs">Open</text>
+    <text x="454" y="171" font-size="43" font-weight="400" textLength="330" lengthAdjust="spacingAndGlyphs">Compute System</text>
+  </g>
+</svg>

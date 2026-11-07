@@ -1,0 +1,28 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: open_compute_system
+      POSTGRES_USER: open_compute_system
+      POSTGRES_PASSWORD: open-compute-system-local-password
+    ports:
+      - "127.0.0.1:5434:5432"
+    volumes:
+      - open_compute_system_local_postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U open_compute_system -d open_compute_system"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "127.0.0.1:6381:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  open_compute_system_local_postgres:

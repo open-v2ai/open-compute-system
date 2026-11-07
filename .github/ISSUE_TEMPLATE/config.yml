@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Setup and design questions
+    url: https://github.com/open-v2ai/open-compute-system/discussions
+    about: Ask and answer questions in GitHub Discussions.
+  - name: Security vulnerability
+    url: https://github.com/open-v2ai/open-compute-system/security/advisories/new
+    about: Report vulnerabilities privately. Do not file a public issue.

@@ -1,0 +1,139 @@
+x-logging: &default_logging
+  driver: json-file
+  options:
+    max-size: 10m
+    max-file: "3"
+
+x-backend: &backend
+  image: ${API_IMAGE:-open-compute-system-api:local}
+  build: ../api
+  logging: *default_logging
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-open_compute_system}
+      POSTGRES_USER: ${POSTGRES_USER:-open_compute_system}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in deploy/.env}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-open_compute_system} -d ${POSTGRES_DB:-open_compute_system}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+  migrate:
+    <<: *backend
+    restart: "no"
+    command: ["python", "scripts/upgrade_database.py"]
+    environment: &api_environment
+      APP_ENV: production
+      DATABASE_URL: ${DATABASE_URL:-postgresql+asyncpg://${POSTGRES_USER:-open_compute_system}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-open_compute_system}}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+      REDIS_KEY_PREFIX: ${REDIS_KEY_PREFIX:-}
+      CELERY_QUEUE: ${CELERY_QUEUE:-celery}
+      SESSION_SECRET: ${SESSION_SECRET:?set SESSION_SECRET in deploy/.env}
+      SESSION_COOKIE: ${SESSION_COOKIE:-ocs_session}
+      CSRF_COOKIE: ${CSRF_COOKIE:-ocs_csrf}
+      WEB_ORIGIN: https://${PUBLIC_HOST:?set PUBLIC_HOST in deploy/.env}
+      ADMIN_ORIGIN: https://${ADMIN_HOST:?set ADMIN_HOST in deploy/.env}
+      TRUSTED_HOSTS: ${PUBLIC_HOST},${ADMIN_HOST}
+      ADMIN_MFA_TOTP_SECRET: ${ADMIN_MFA_TOTP_SECRET:?set ADMIN_MFA_TOTP_SECRET in deploy/.env}
+      ADMIN_LOGIN_ENABLED: "true"
+      ALLOW_MOCK_PROVIDER_IN_PRODUCTION: "false"
+      ALLOW_MOCK_INFERENCE_IN_PRODUCTION: "false"
+      PRIVATE_NODE_AGENT_TOKEN: ${PRIVATE_NODE_AGENT_TOKEN:-}
+      VLLM_INTERNAL_API_KEY: ${VLLM_INTERNAL_API_KEY:-}
+      DEMO_AUTO_DISPATCH: "false"
+      DEMO_SEED_ENABLED: "false"
+      SELF_REGISTRATION_ENABLED: "false"
+    depends_on:
+      postgres:
+        condition: service_healthy
+  api:
+    <<: *backend
+    mem_limit: ${API_MEMORY_LIMIT:-512m}
+    cpus: ${API_CPUS:-1.0}
+    restart: unless-stopped
+    environment: *api_environment
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; from app.core.config import settings; urllib.request.urlopen(urllib.request.Request('http://127.0.0.1:8000/health/ready', headers={'Host': settings.allowed_hosts[0]}))"]
+      interval: 10s
+      timeout: 4s
+      retries: 20
+  worker:
+    <<: *backend
+    mem_limit: ${WORKER_MEMORY_LIMIT:-512m}
+    cpus: ${WORKER_CPUS:-1.0}
+    restart: unless-stopped
+    command: ["celery", "-A", "app.workers.celery_app.celery_app", "worker", "--loglevel=INFO", "--concurrency=${WORKER_CONCURRENCY:-2}"]
+    environment: *api_environment
+    depends_on:
+      api:
+        condition: service_healthy
+  scheduler:
+    <<: *backend
+    mem_limit: ${SCHEDULER_MEMORY_LIMIT:-192m}
+    cpus: ${SCHEDULER_CPUS:-0.25}
+    restart: unless-stopped
+    command: ["celery", "-A", "app.workers.celery_app.celery_app", "beat", "--loglevel=INFO"]
+    environment: *api_environment
+    depends_on:
+      api:
+        condition: service_healthy
+  web:
+    mem_limit: ${WEB_MEMORY_LIMIT:-512m}
+    cpus: ${WEB_CPUS:-1.0}
+    image: ${WEB_IMAGE:-open-compute-system-web:local}
+    logging: *default_logging
+    build:
+      context: ../web
+      args:
+        API_ORIGIN: http://api:8000
+        NEXT_PUBLIC_CSRF_COOKIE: ${CSRF_COOKIE:-ocs_csrf}
+    restart: unless-stopped
+    environment:
+      API_ORIGIN: http://api:8000
+    depends_on:
+      api:
+        condition: service_healthy
+  nginx:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      NGINX_ENVSUBST_FILTER: ^(PUBLIC_HOST|ADMIN_HOST)$$
+      PUBLIC_HOST: ${PUBLIC_HOST}
+      ADMIN_HOST: ${ADMIN_HOST}
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/templates/default.conf.template:ro
+      - ./nginx/proxy_params:/etc/nginx/proxy_params:ro
+      - ${TLS_CERT_PATH:?set TLS_CERT_PATH in deploy/.env}:/etc/nginx/tls/tls.crt:ro
+      - ${TLS_KEY_PATH:?set TLS_KEY_PATH in deploy/.env}:/etc/nginx/tls/tls.key:ro
+    depends_on:
+      - web
+      - api
+
+volumes:
+  postgres_data:
+  redis_data:

@@ -1,0 +1,49 @@
+# Host Nginx template for the user-requested public demo.
+# API remains on the application's private Docker network. Keep the URL prefix intact.
+limit_req_zone $binary_remote_addr zone=ocs_demo_api:1m rate=5r/s;
+limit_req_zone $binary_remote_addr zone=ocs_demo_login:1m rate=10r/m;
+
+server {
+    listen 80;
+    listen [::]:80;
+    server_name demo.v2ai.org;
+    location ^~ /.well-known/acme-challenge/ { root /var/www/ocs-demo-acme; }
+    location / { return 308 https://$host$request_uri; }
+}
+
+server {
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    http2 on;
+    server_name demo.v2ai.org;
+    ssl_certificate /etc/letsencrypt/live/demo.v2ai.org/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/demo.v2ai.org/privkey.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    client_max_body_size 64k;
+    limit_req_status 429;
+
+    location ^~ /.well-known/acme-challenge/ { root /var/www/ocs-demo-acme; }
+    location = / { return 302 /open-compute-system; }
+    location ^~ /open-compute-system/admin { return 404; }
+    location ^~ /open-compute-system/api/v1/admin { return 404; }
+    location ^~ /open-compute-system/health/providers { return 404; }
+    location = /open-compute-system/api/v1/auth/login {
+        limit_req zone=ocs_demo_login burst=5 nodelay;
+        proxy_pass http://127.0.0.1:18173;
+        include /etc/nginx/snippets/ocs-demo-proxy.conf;
+    }
+    location ^~ /open-compute-system/api/ {
+        limit_req zone=ocs_demo_api burst=30 nodelay;
+        proxy_pass http://127.0.0.1:18173;
+        include /etc/nginx/snippets/ocs-demo-proxy.conf;
+    }
+    location = /open-compute-system {
+        proxy_pass http://127.0.0.1:18173;
+        include /etc/nginx/snippets/ocs-demo-proxy.conf;
+    }
+    location ^~ /open-compute-system/ {
+        proxy_pass http://127.0.0.1:18173;
+        include /etc/nginx/snippets/ocs-demo-proxy.conf;
+    }
+    location / { return 404; }
+}

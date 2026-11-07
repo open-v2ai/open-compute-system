@@ -1,0 +1,30 @@
+# Private HTTP demo only: no public ingress, and no weakened production guardrails.
+# Reach via an SSH tunnel whose local URL is PREVIEW_ORIGIN.
+x-preview-environment: &preview_environment
+  APP_ENV: development
+  WEB_ORIGIN: ${PREVIEW_ORIGIN:-http://127.0.0.1:3003}
+  ADMIN_ORIGIN: ${PREVIEW_ORIGIN:-http://127.0.0.1:3003}
+  TRUSTED_HOSTS: localhost,127.0.0.1,api
+  SESSION_COOKIE_SECURE: "false"
+  SESSION_COOKIE: ocs_preview_session
+  CSRF_COOKIE: ocs_preview_csrf
+  DEMO_SEED_ENABLED: "true"
+  DEMO_AUTO_DISPATCH: "false"
+  SELF_REGISTRATION_ENABLED: "false"
+  ADMIN_MFA_TOTP_SECRET: ""
+  ADMIN_LOGIN_ENABLED: "true"
+
+services:
+  web:
+    build:
+      args:
+        NEXT_PUBLIC_CSRF_COOKIE: ocs_preview_csrf
+  migrate:
+    environment: *preview_environment
+  api:
+    environment: *preview_environment
+  worker:
+    environment: *preview_environment
+  scheduler:
+    environment: *preview_environment
+    command: [celery, -A, app.workers.celery_app.celery_app, beat, --loglevel=INFO, --schedule=/tmp/celerybeat-schedule]

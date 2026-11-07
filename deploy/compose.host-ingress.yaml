@@ -1,0 +1,8 @@
+# Reuse an existing host/reverse proxy instead of binding this stack to 80/443.
+services:
+  nginx:
+    profiles: [container-ingress]
+    volumes: !reset []
+  web:
+    ports:
+      - "127.0.0.1:${APP_HTTP_PORT:-18081}:3000"

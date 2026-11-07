@@ -1,0 +1,31 @@
+# Docker Compose >= 2.24.4. Application shutdown never removes shared resources.
+services:
+  postgres:
+    profiles: [bundled-dependencies]
+    environment:
+      POSTGRES_PASSWORD: unused-external-dependencies
+  redis:
+    profiles: [bundled-dependencies]
+  migrate:
+    depends_on: !reset {}
+    environment: &external_environment
+      DATABASE_URL: ${DATABASE_URL:?set the external DATABASE_URL}
+      REDIS_URL: ${REDIS_URL:?set the external REDIS_URL}
+    networks: [default, shared]
+  api:
+    depends_on: !override
+      migrate:
+        condition: service_completed_successfully
+    environment: *external_environment
+    networks: [default, shared]
+  worker:
+    environment: *external_environment
+    networks: [default, shared]
+  scheduler:
+    environment: *external_environment
+    networks: [default, shared]
+
+networks:
+  shared:
+    name: ${SHARED_NETWORK:-v2ai-infra}
+    external: true

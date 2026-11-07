@@ -1,0 +1,27 @@
+# Public HTTPS Mock demo. Always layered after --demo-lite / --preview.
+x-public-environment: &public_environment
+  PUBLIC_DEMO_ENABLED: "true"
+  WEB_ORIGIN: ${DEMO_ORIGIN:?set the public HTTPS demo origin}
+  ADMIN_ORIGIN: ${DEMO_ORIGIN:?set the public HTTPS demo origin}
+  TRUSTED_HOSTS: ${DEMO_HOST:?set the demo hostname},localhost,127.0.0.1,api
+  SESSION_COOKIE_SECURE: "true"
+  SESSION_COOKIE: ocs_public_demo_session
+  CSRF_COOKIE: ocs_public_demo_csrf
+  COOKIE_PATH: ${PUBLIC_BASE_PATH:-/open-compute-system}
+  ADMIN_LOGIN_ENABLED: "false"
+  SELF_REGISTRATION_ENABLED: "false"
+
+services:
+  migrate:
+    environment: *public_environment
+  api:
+    environment: *public_environment
+  web:
+    ports: !override
+      - "127.0.0.1:${PUBLIC_DEMO_PORT:-18173}:3000"
+    build:
+      args:
+        NEXT_PUBLIC_BASE_PATH: ${PUBLIC_BASE_PATH:-/open-compute-system}
+        NEXT_PUBLIC_PUBLIC_DEMO: "true"
+        NEXT_PUBLIC_DEMO_ORIGIN: ${DEMO_ORIGIN:?set the public HTTPS demo origin}
+        NEXT_PUBLIC_CSRF_COOKIE: ocs_public_demo_csrf

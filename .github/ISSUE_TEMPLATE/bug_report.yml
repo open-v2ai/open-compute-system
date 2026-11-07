@@ -1,0 +1,83 @@
+name: Bug report
+description: Report a reproducible defect in the current implementation.
+title: "[Bug]: "
+labels: [bug, needs-triage]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug. Remove credentials, customer data, cookies, and private URLs from all logs.
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Release, commit SHA, or branch.
+      placeholder: v0.1.0 or 0123456
+    validations:
+      required: true
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component
+      options:
+        - API / worker
+        - Web / user console
+        - Admin console
+        - Node agent / vLLM
+        - Deployment / migration
+        - Documentation
+        - Other
+    validations:
+      required: true
+  - type: dropdown
+    id: runtime
+    attributes:
+      label: Runtime mode
+      options:
+        - Local SQLite + mock adapters
+        - PostgreSQL / Redis
+        - Real GPU provider
+        - Real vLLM node
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: Include the expected and actual behavior.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction steps
+      placeholder: |
+        1. Start ...
+        2. Call ...
+        3. Observe ...
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: OS, Python, Node.js, pnpm, browser, database, and deployment mode.
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Sanitized logs or screenshots
+      render: shell
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checklist
+      options:
+        - label: I searched existing issues and pull requests.
+          required: true
+        - label: I removed secrets, personal data, customer data, and private infrastructure details.
+          required: true
+        - label: This is not a vulnerability report. I will use private vulnerability reporting for security issues.
+          required: true

@@ -1,0 +1,19 @@
+# Low-traffic, private Mock demo: reuse the existing in-process Outbox dispatcher.
+# This overlay is only selected with --demo-lite and always implies --preview.
+services:
+  worker:
+    profiles: [background-workers]
+  scheduler:
+    profiles: [background-workers]
+  api:
+    environment:
+      DEMO_AUTO_DISPATCH: "true"
+    mem_limit: ${DEMO_API_MEMORY_LIMIT:-192m}
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/ready')"]
+      interval: 60s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+  web:
+    mem_limit: ${DEMO_WEB_MEMORY_LIMIT:-192m}

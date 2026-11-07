@@ -1,0 +1,44 @@
+[project]
+name = "open-compute-system-node-agent"
+version = "0.1.0"
+description = "Controlled Docker vLLM execution agent for Open Compute System"
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "Apache-2.0" }
+keywords = ["gpu", "vllm", "inference", "docker", "agent"]
+dependencies = [
+  "fastapi>=0.116.0",
+  "pydantic-settings>=2.10.0",
+  "uvicorn[standard]>=0.35.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/open-v2ai/open-compute-system"
+Documentation = "https://github.com/open-v2ai/open-compute-system/tree/main/docs"
+Issues = "https://github.com/open-v2ai/open-compute-system/issues"
+
+[build-system]
+requires = ["setuptools>=78"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["app*"]
+
+[dependency-groups]
+dev = [
+  "httpx>=0.28.0",
+  "pytest>=8.4.0",
+  "ruff>=0.12.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+ignore = ["B008"]

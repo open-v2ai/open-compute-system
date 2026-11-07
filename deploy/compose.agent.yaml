@@ -1,0 +1,23 @@
+services:
+  node-agent:
+    build:
+      context: ../agent
+    restart: unless-stopped
+    gpus: all
+    environment:
+      AGENT_ENV: production
+      AGENT_TOKEN: ${PRIVATE_NODE_AGENT_TOKEN:?set PRIVATE_NODE_AGENT_TOKEN}
+      TRUSTED_HOSTS: ${AGENT_TRUSTED_HOSTS:?set AGENT_TRUSTED_HOSTS}
+      VLLM_DEFAULT_IMAGE: ${VLLM_DEFAULT_IMAGE:?set VLLM_DEFAULT_IMAGE to a tested immutable tag or digest}
+      VLLM_IMAGE_ALLOWLIST: ${VLLM_IMAGE_ALLOWLIST:-vllm/vllm-openai:}
+      MODEL_CACHE_DIR: /var/lib/open-compute-agent/huggingface
+      VLLM_BIND_HOST: ${VLLM_BIND_HOST:-127.0.0.1}
+      VLLM_ADVERTISED_HOST: ${VLLM_ADVERTISED_HOST:?set VLLM_ADVERTISED_HOST}
+      VLLM_INTERNAL_API_KEY: ${VLLM_INTERNAL_API_KEY:?set VLLM_INTERNAL_API_KEY}
+      HF_TOKEN: ${HF_TOKEN:-}
+      NVIDIA_DRIVER_CAPABILITIES: utility
+    ports:
+      - "${AGENT_LISTEN_HOST:-127.0.0.1}:8110:8110"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ${MODEL_CACHE_HOST_PATH:?set MODEL_CACHE_HOST_PATH}:/var/lib/open-compute-agent/huggingface
