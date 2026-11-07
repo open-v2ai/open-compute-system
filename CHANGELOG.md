@@ -6,6 +6,16 @@ All notable changes to this project are documented in this file. The format foll
 
 ## [Unreleased]
 
+### Changed
+
+- Update API, node agent, web and GitHub Actions dependencies together. Keep Node.js 22 LTS and
+  matching Node.js types; runtime major upgrades require an explicit LTS migration.
+
+### Fixed
+
+- Preserve React HTML through CDN email obfuscation with `Cache-Control: no-transform` on the public
+  demo proxy, and apply nonce-based CSP to the deployment subpath root.
+
 ### Added
 
 - Public Mock sandbox at `https://demo.v2ai.org/open-compute-system`, with scoped HTTPS cookies,

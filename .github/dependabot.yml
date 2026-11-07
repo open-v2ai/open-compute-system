@@ -32,6 +32,10 @@ updates:
       time: "03:30"
       timezone: Asia/Shanghai
     open-pull-requests-limit: 5
+    # Keep runtime types on the supported Node.js 22 line.
+    ignore:
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
     groups:
       web-minor-patch:
         update-types: [minor, patch]
@@ -46,6 +50,11 @@ updates:
       day: monday
       time: "03:45"
       timezone: Asia/Shanghai
+    # Node.js odd major releases can be EOL before the next dependency sweep.
+    # Runtime major upgrades require an explicit LTS migration.
+    ignore:
+      - dependency-name: node
+        update-types: ["version-update:semver-major"]
     open-pull-requests-limit: 5
 
   - package-ecosystem: docker-compose

@@ -168,6 +168,9 @@ matching frontend CSRF-cookie configuration. Use the host Nginx examples in
 `deploy/nginx/public-demo.conf.example` and `deploy/nginx/public-demo-proxy.conf`, with a valid
 certificate for your domain and a renewal reload hook. Preserve the prefix when proxying to Web.
 The example includes path-specific request limits and body-size limits for this small demonstration.
+The proxy snippet also appends `Cache-Control: no-transform` while retaining upstream cache policy.
+This prevents CDN HTML transformations such as Cloudflare email obfuscation from changing React's
+server-rendered text before hydration; the nonce-based CSP remains intact.
 
 ```bash
 python3 deploy/compose.py --dependencies external --public-demo config --quiet
