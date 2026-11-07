@@ -1,10 +1,10 @@
-FROM node:22-alpine AS deps
+FROM node:25-alpine AS deps
 WORKDIR /app
 RUN corepack enable && corepack prepare pnpm@11.20.0 --activate
 COPY package.json pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile --ignore-scripts
 
-FROM node:22-alpine AS builder
+FROM node:25-alpine AS builder
 WORKDIR /app
 ENV NEXT_TELEMETRY_DISABLED=1
 ARG NODE_BUILD_MEMORY_MB=1536
@@ -23,7 +23,7 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN corepack enable && corepack prepare pnpm@11.20.0 --activate && pnpm build
 
-FROM node:22-alpine AS runner
+FROM node:25-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 HOSTNAME=0.0.0.0 PORT=3000
 RUN addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 nextjs
